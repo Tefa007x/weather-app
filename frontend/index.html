@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="WeatherApp: live weather and 7-day forecasts powered by Open-Meteo.">
+<title>WeatherApp</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Boot overlay (shown while restoring session) -->
+<div id="boot-overlay" class="boot-overlay" role="status" aria-live="polite" aria-label="Restoring session">
+  <div class="boot-shell">
+    <div class="boot-head">
+      <div class="boot-brand">
+        <div class="cloud-logo" style="transform:scale(0.8);transform-origin:left center" aria-hidden="true">
+          <div class="body"></div><div class="bump1"></div><div class="bump2"></div><div class="shine"></div>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:1.1rem;color:#fff">WeatherApp</div>
+          <div style="font-size:12px;color:var(--text-secondary)">Checking your session…</div>
+        </div>
+      </div>
+      <div class="boot-status">
+        <span class="boot-dot" aria-hidden="true"></span>
+        <span>Loading…</span>
+      </div>
+    </div>
+    <div class="boot-grid">
+      <div>
+        <div class="skel boot-hero"></div>
+        <div class="boot-strip">
+          <div class="skel boot-tile"></div><div class="skel boot-tile"></div>
+          <div class="skel boot-tile"></div><div class="skel boot-tile"></div>
+          <div class="skel boot-tile"></div>
+        </div>
+      </div>
+      <div class="boot-side">
+        <div class="skel boot-row"></div><div class="skel boot-row"></div>
+        <div class="skel boot-row"></div><div class="skel boot-row"></div>
+        <div class="skel boot-row"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN 1: AUTHENTICATION (SIGN IN & SIGN UP)
+══════════════════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-bg">
+    <div class="auth-topbar">
+      <div class="auth-clock" aria-label="Current system time">
+        <div class="clock-time" id="auth-clock-time">--:--</div>
+        <div id="auth-clock-date">Loading date...</div>
+      </div>
+    </div>
+
+    <!-- Ambient CSS Weather Visuals -->
+    <div class="float-left" aria-hidden="true">
+      <div class="float-cloud">
+        <div class="cloud-body-ambient"></div>
+        <div class="rain-wrap"><span></span><span></span><span></span><span></span></div>
+      </div>
+    </div>
+    <div class="float-right" aria-hidden="true">
+      <div class="sun-cloud-wrap">
+        <div class="sun-orb-ambient"></div>
+        <div class="cloud-mini-ambient"></div>
+      </div>
+    </div>
+
+    <main class="auth-card">
+      <div class="auth-tabs" role="tablist">
+        <button id="tab-btn-login" class="auth-tab on" type="button" role="tab" aria-selected="true">Sign In</button>
+        <button id="tab-btn-signup" class="auth-tab" type="button" role="tab" aria-selected="false">Sign Up</button>
+      </div>
+
+      <div class="logo-row">
+        <div class="cloud-logo" aria-hidden="true">
+          <div class="body"></div><div class="bump1"></div><div class="bump2"></div><div class="shine"></div>
+        </div>
+        <h1 class="logo-text">Weather<span>App</span></h1>
+      </div>
+
+      <form id="auth-form" novalidate>
+        <div id="signup-name-group" style="display:none">
+          <label for="auth-username" class="input-label">Username</label>
+          <div class="field">
+            <span class="field-ic" aria-hidden="true">👤</span>
+            <input type="text" id="auth-username" placeholder="Enter your username" autocomplete="username">
+          </div>
+        </div>
+
+        <div>
+          <label for="auth-identifier" id="auth-identifier-label" class="input-label">Username or Email</label>
+          <div class="field">
+            <span class="field-ic" aria-hidden="true">✉️</span>
+            <input type="text" id="auth-identifier" placeholder="Enter your username or Email address" autocomplete="username" required>
+          </div>
+        </div>
+
+        <div>
+          <label for="auth-password" class="input-label">Password</label>
+          <div class="field">
+            <span class="field-ic" aria-hidden="true">🔒</span>
+            <input type="password" id="auth-password" placeholder="Enter your password" autocomplete="current-password" required>
+            <button type="button" class="eye-toggle" id="auth-eye-btn" aria-label="Show password" aria-pressed="false">👁</button>
+          </div>
+        </div>
+
+        <div id="auth-pwd-meter" class="pwd-meter auth-pwd-meter" aria-live="polite">
+          <div class="pwd-bars">
+            <div class="pwd-bar" id="auth-pwd-bar-1"></div>
+            <div class="pwd-bar" id="auth-pwd-bar-2"></div>
+            <div class="pwd-bar" id="auth-pwd-bar-3"></div>
+            <div class="pwd-bar" id="auth-pwd-bar-4"></div>
+          </div>
+          <div class="pwd-meta">
+            <span class="pwd-strength-label" id="auth-pwd-strength">Weak</span>
+            <span id="auth-pwd-bytes">0 / 72 bytes</span>
+          </div>
+        </div>
+
+        <div id="auth-error-msg" class="auth-msg" role="alert"></div>
+
+        <button type="submit" id="auth-submit-btn" class="cta">Sign In to Dashboard</button>
+      </form>
+
+      <p class="auth-switch">
+        <span id="auth-switch-text">Don't have an account?</span>
+        <button type="button" id="auth-switch-btn">Sign Up</button>
+      </p>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN 2: UNIFIED APP SHELL
+══════════════════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+  <div class="app-wrap" id="main-app-wrap">
+
+    <!-- Unified Sidebar Navigation -->
+    <aside class="sidebar" aria-label="Primary Application Navigation">
+      <div class="sb-logo">
+        <div class="cloud-logo" style="transform:scale(.75);transform-origin:left center" aria-hidden="true">
+          <div class="body"></div><div class="bump1"></div><div class="bump2"></div><div class="shine"></div>
+        </div>
+        <span class="sb-logo-text">WeatherApp</span>
+      </div>
+
+      <nav class="sb-nav-group">
+        <button type="button" id="nav-btn-dashboard" class="nav-item active">
+          <span class="nav-ic" aria-hidden="true">🏠</span> Dashboard
+        </button>
+        <button type="button" id="nav-btn-weather" class="nav-item">
+          <span class="nav-ic" aria-hidden="true">🌍</span> World Weather
+        </button>
+        <button type="button" id="nav-btn-settings" class="nav-item">
+          <span class="nav-ic" aria-hidden="true">⚙️</span> Settings
+        </button>
+      </nav>
+
+      <div class="spacer"></div>
+
+      <!-- Sidebar unit toggle box -->
+      <div class="sb-unit-box" id="sb-unit-box">
+        <div class="sb-unit-title">
+          <span>Units</span>
+          <span class="sb-unit-sub" id="sb-unit-desc">°C • km/h</span>
+        </div>
+        <div class="sb-unit-switch" role="radiogroup" aria-label="Quick temperature unit toggle">
+          <button type="button" class="sb-unit-btn active" id="sb-unit-c" role="radio" aria-checked="true">°C</button>
+          <button type="button" class="sb-unit-btn" id="sb-unit-f" role="radio" aria-checked="false">°F</button>
+        </div>
+      </div>
+
+      <div class="sb-user-card">
+        <div class="sb-avatar" id="sb-avatar-letter"></div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sb-username-text"></div>
+          <div class="sb-user-status">● Online</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Dynamic Central Main Views -->
+    <main class="app-main">
+
+      <!-- SUB-VIEW 1: DASHBOARD -->
+      <section id="view-dashboard" class="sub-view active" aria-labelledby="dashboard-heading">
+        <h2 id="dashboard-heading" class="sr-only">Weather Dashboard</h2>
+
+        <div class="search-container" id="search-container">
+          <form class="search-row" id="search-form" role="search">
+            <div class="search-box" id="search-box-wrap">
+              <span style="color:var(--text-secondary);margin-right:8px" aria-hidden="true">🔍</span>
+              <label for="city-search-input" class="sr-only">Search City</label>
+              <input id="city-search-input" type="search"
+                placeholder="Search for a city..."
+                autocomplete="off" required
+                role="combobox" aria-autocomplete="list"
+                aria-expanded="false" aria-controls="ac-dropdown">
+            </div>
+            <button type="submit" class="show-btn">Show Weather</button>
+          </form>
+          <div id="ac-dropdown" class="ac-dropdown" role="listbox" aria-label="Matching cities"></div>
+        </div>
+
+        <!-- Quick City Filter Chips -->
+        <div class="quick-chips" role="group" aria-label="Popular quick selection cities">
+          <button type="button" class="chip" data-city="Cairo">Cairo</button>
+          <button type="button" class="chip" data-city="Alexandria">Alexandria</button>
+          <button type="button" class="chip" data-city="Riyadh">Riyadh</button>
+          <button type="button" class="chip" data-city="London">London</button>
+          <button type="button" class="chip" data-city="Tokyo">Tokyo</button>
+          <button type="button" class="chip" data-city="Dubai">Dubai</button>
+        </div>
+
+        <!-- UI State 0: Idle / Welcome State -->
+        <div id="state-empty" class="state-box" style="display:none">
+          <div style="font-size:3rem;margin-bottom:12px" aria-hidden="true">🌤️</div>
+          <h3 class="state-title">Explore Live Global Weather</h3>
+          <p class="state-desc">Search any city above with live autocomplete, pick a quick destination chip, or open one of your saved places on the right.</p>
+          <button type="button" class="show-btn" id="empty-load-cairo-btn" style="padding:10px 24px">Load Cairo Weather</button>
+        </div>
+
+        <!-- UI State 1: Loading State -->
+        <div id="state-loading" class="state-box" style="display:none" role="status" aria-live="polite">
+          <div class="spinner"></div>
+          <h3 class="state-title">Fetching Live Meteorological Data</h3>
+          <p class="state-desc">Connecting to Open-Meteo API and calculating 7-day atmospheric forecasts...</p>
+        </div>
+
+        <!-- UI State 2: Error Not Found State -->
+        <div id="state-not-found" class="state-box" style="display:none" role="alert">
+          <div style="font-size:3rem;margin-bottom:12px" aria-hidden="true">🧭</div>
+          <h3 class="state-title" id="not-found-city-name">City Not Found</h3>
+          <p class="state-desc" id="not-found-desc">We couldn't locate weather coordinates for this search query. Please verify the spelling or select a city from the list.</p>
+          <button type="button" class="show-btn" id="not-found-action-btn" style="padding:10px 24px">Reset Search</button>
+        </div>
+
+        <!-- Stable Hero Weather Card -->
+        <article class="wcard" id="hero-weather-card" style="display:none">
+          <div class="wcard-top">
+            <div>
+              <h3 class="city-name" id="hero-city-title"></h3>
+              <p class="country" id="hero-country-subtitle"></p>
+              <div class="local-time-badge" id="hero-local-time-badge" style="display:none">
+                <span aria-hidden="true">🕒</span>
+                <span>Local Time:</span>
+                <strong id="hero-local-time-val">--:--</strong>
+                <span id="hero-timezone-val"></span>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:20px">
+              <div class="hero-temp-group">
+                <div class="temp-big" id="hero-temperature-val">--°</div>
+                <div class="temp-subtext" id="hero-temp-mode-label">Now • Current Condition</div>
+              </div>
+
+              <div id="hero-animated-icon" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <div class="wcard-mid-row">
+            <div class="wcard-cond-group">
+              <span class="wcard-cond" id="hero-condition-text"></span>
+              <span class="day-pill" id="hero-selected-day-pill">Today</span>
+            </div>
+            <button type="button" id="hero-fav-action-btn" class="fav-btn-s">
+              <span id="fav-btn-icon">☆</span>
+              <span id="fav-btn-text">Save to Favorites</span>
+            </button>
+          </div>
+
+          <dl class="wcard-stats" id="hero-stats-dl">
+            <div class="stat">
+              <span class="stat-ic" aria-hidden="true">🌡</span>
+              <div class="stat-meta">
+                <dt class="stat-label">Feels Like</dt>
+                <dd class="stat-val" id="hero-feels-val">--°</dd>
+              </div>
+            </div>
+            <div class="stat">
+              <span class="stat-ic" aria-hidden="true">💧</span>
+              <div class="stat-meta">
+                <dt class="stat-label">Humidity</dt>
+                <dd class="stat-val" id="hero-humidity-val">--%</dd>
+              </div>
+            </div>
+            <div class="stat" id="stat-wind-card">
+              <span class="stat-ic" aria-hidden="true">💨</span>
+              <div class="stat-meta">
+                <dt class="stat-label">Wind Speed</dt>
+                <dd class="stat-val" id="hero-wind-val">-- km/h</dd>
+              </div>
+            </div>
+            <div class="stat">
+              <span class="stat-ic" aria-hidden="true">🔆</span>
+              <div class="stat-meta">
+                <dt class="stat-label">UV Index</dt>
+                <dd class="stat-val" id="hero-uv-val">
+                  <span id="hero-uv-num">--</span>
+                  <span class="uv-pill uv-low" id="hero-uv-pill">Low</span>
+                </dd>
+              </div>
+            </div>
+            <div class="stat">
+              <span class="stat-ic" aria-hidden="true">☔</span>
+              <div class="stat-meta">
+                <dt class="stat-label">Rain Chance</dt>
+                <dd class="stat-val" id="hero-rain-val">--%</dd>
+              </div>
+            </div>
+            <div class="stat">
+              <span class="stat-ic" aria-hidden="true">🌅</span>
+              <div class="stat-meta">
+                <dt class="stat-label">Sunrise / Sunset</dt>
+                <dd class="stat-val" id="hero-sun-val">-- / --</dd>
+              </div>
+            </div>
+          </dl>
+        </article>
+
+        <!-- 24-Hour Hourly Forecast -->
+        <section class="hourly-section" id="hourly-section" aria-labelledby="hourly-section-title" style="display:none">
+          <div class="section-head-row">
+            <h3 class="section-title" id="hourly-section-title">24-Hour Hourly Forecast</h3>
+            <span class="section-pill">Hourly Temp &amp; Rain Probability</span>
+          </div>
+          <div class="hourly-viewport" id="hourly-viewport" tabindex="0" aria-label="24-hour horizontal hourly forecast">
+            <div class="hourly-track" id="hourly-track"></div>
+          </div>
+        </section>
+
+        <!-- 7-Day Weekday Forecast Strip -->
+        <section class="forecast-section" id="forecast-section" aria-labelledby="forecast-section-title" style="display:none">
+          <div class="section-head-row">
+            <h3 class="section-title" id="forecast-section-title">7-Day Weekday Forecast</h3>
+            <span class="section-pill">⇄ Infinite Loop • Click day or use ← →</span>
+          </div>
+
+          <div class="forecast-wrap">
+            <button type="button" class="fc-arrow" data-dir="-1" aria-label="Previous forecast days">‹</button>
+            <div class="fc-viewport" id="forecast-viewport" tabindex="0" aria-label="Horizontal forecast days list">
+              <div class="fc-track" id="forecast-track"></div>
+            </div>
+            <button type="button" class="fc-arrow" data-dir="1" aria-label="Next forecast days">›</button>
+          </div>
+        </section>
+      </section>
+
+      <!-- SUB-VIEW 2: WORLD WEATHER -->
+      <section id="view-weather" class="sub-view" aria-labelledby="world-heading">
+        <div class="world-header">
+          <div>
+            <h2 id="world-heading" style="font-size:1.35rem;font-weight:800;color:#fff">🌍 Global Meteorological Overview</h2>
+            <p style="font-size:13px;color:var(--text-secondary);margin-top:3px">Batch-fetched and synchronized across major worldwide meteorological stations</p>
+          </div>
+          <div class="world-actions">
+            <div class="world-stamp" id="world-updated-stamp">⚡ Updates every 10 min</div>
+            <button type="button" class="refresh-btn" id="world-refresh-btn" aria-label="Refresh world weather">
+              <span class="refresh-icon" aria-hidden="true">↻</span>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="world-grid" id="world-stations-grid"></div>
+      </section>
+
+      <!-- SUB-VIEW 3: SETTINGS VIEW -->
+      <section id="view-settings" class="sub-view" aria-labelledby="settings-heading">
+        <div style="margin-bottom:24px;text-align:center">
+          <h2 id="settings-heading" style="font-size:1.45rem;font-weight:800;color:#fff">⚙️ System &amp; Profile Preferences</h2>
+          <p style="font-size:13px;color:var(--text-secondary);margin-top:4px">Configure your display units, account security, and credentials</p>
+        </div>
+
+        <div class="settings-wrap">
+          <div class="settings-card">
+            <h3 class="s-card-title">🌐 Display Preferences</h3>
+            <div class="unit-toggle-group">
+              <div>
+                <div class="unit-label">Temperature &amp; Wind Unit</div>
+                <div class="unit-sub">Toggle between Metric (°C, km/h) and Imperial (°F, mph)</div>
+              </div>
+              <div class="segmented-btn" role="radiogroup" aria-label="Temperature unit selection">
+                <button type="button" id="unit-btn-c" class="seg-option active" role="radio" aria-checked="true">°C (Metric)</button>
+                <button type="button" id="unit-btn-f" class="seg-option" role="radio" aria-checked="false">°F (Imperial)</button>
+              </div>
+            </div>
+          </div>
+
+          <form class="settings-card" id="settings-form" novalidate>
+            <h3 class="s-card-title">👤 Account Security &amp; Credentials</h3>
+
+            <div class="avatar-row">
+              <div class="avatar" id="settings-avatar-letter"></div>
+              <div class="avatar-info">
+                <div class="name" id="settings-display-name"></div>
+                <div class="email" id="settings-display-email"></div>
+              </div>
+            </div>
+
+            <div class="s-field">
+              <label for="settings-username-input" class="s-label">Username</label>
+              <div class="s-input-wrap">
+                <input id="settings-username-input" autocomplete="username" value="" required>
+              </div>
+            </div>
+
+            <div class="s-field">
+              <label for="settings-email-input" class="s-label">Email Address</label>
+              <div class="s-input-wrap">
+                <input id="settings-email-input" type="email" autocomplete="email" value="" required>
+              </div>
+            </div>
+
+            <div class="s-divider"></div>
+
+            <div class="s-field">
+              <div class="s-label-row">
+                <label for="settings-current-password" class="s-label">Current Password (required to change email or password)</label>
+                <span class="req-pill" id="current-pwd-req-pill">Required</span>
+              </div>
+              <div class="s-input-wrap" id="current-pwd-wrap">
+                <input id="settings-current-password" type="password" placeholder="••••••••" autocomplete="current-password">
+                <button type="button" class="eye-toggle" data-eye-target="settings-current-password" aria-label="Show current password" aria-pressed="false">👁</button>
+              </div>
+            </div>
+
+            <div class="s-field">
+              <div class="s-label-row">
+                <label for="settings-new-password" class="s-label">New Password (leave blank to keep unchanged)</label>
+              </div>
+              <div class="s-input-wrap">
+                <input id="settings-new-password" type="password" placeholder="••••••••" autocomplete="new-password">
+                <button type="button" class="eye-toggle" data-eye-target="settings-new-password" aria-label="Show new password" aria-pressed="false">👁</button>
+              </div>
+              <div class="pwd-meter" id="pwd-meter" aria-live="polite">
+                <div class="pwd-bars">
+                  <div class="pwd-bar" id="pwd-bar-1"></div>
+                  <div class="pwd-bar" id="pwd-bar-2"></div>
+                  <div class="pwd-bar" id="pwd-bar-3"></div>
+                  <div class="pwd-bar" id="pwd-bar-4"></div>
+                </div>
+                <div class="pwd-meta">
+                  <span class="pwd-strength-label" id="pwd-strength-text">Weak</span>
+                  <span id="pwd-byte-count">0 / 72 bytes</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="s-field">
+              <div class="s-label-row">
+                <label for="settings-confirm-password" class="s-label">Confirm New Password</label>
+              </div>
+              <div class="s-input-wrap">
+                <input id="settings-confirm-password" type="password" placeholder="••••••••" autocomplete="new-password">
+                <button type="button" class="eye-toggle" data-eye-target="settings-confirm-password" aria-label="Show confirm password" aria-pressed="false">👁</button>
+              </div>
+            </div>
+
+            <div id="settings-error-msg" class="auth-msg" role="alert"></div>
+
+            <button type="submit" class="save-btn" id="settings-save-btn">Save Changes</button>
+          </form>
+
+          <div class="settings-card">
+            <h3 class="s-card-title">🚪 Session Management</h3>
+            <button type="button" class="danger-btn" id="signout-btn">⎋ &nbsp; Sign Out from Account</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Unified Right Panel: My Places -->
+    <aside class="r-panel" id="places-panel" aria-label="Bookmarked Places and Search History">
+      <div class="r-title">
+        <span>My Places</span>
+        <button type="button" class="add-circle" id="add-fav-btn" aria-label="Add current city to favorites" title="Add current city to favorites">＋</button>
+      </div>
+
+      <div class="r-section-title">
+        <span>Favorites</span>
+        <span class="r-count" id="fav-count">0</span>
+      </div>
+      <div id="favorites-list-container" role="list"></div>
+
+      <div class="r-sep"></div>
+
+      <div class="r-section-title">
+        <span>Recent Searches</span>
+        <span class="r-count" id="recent-count">0</span>
+      </div>
+      <div id="recent-list-container" role="list"></div>
+    </aside>
+
+  </div>
+</div>
+
+<div id="toast-banner" class="toast-banner" role="status" aria-live="polite"></div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
