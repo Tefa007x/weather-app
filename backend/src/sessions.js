@@ -17,8 +17,13 @@ async function createSession(res, userId) {
 
 async function destroySession(req, res) {
   const token = req.cookies && req.cookies[config.cookie.name];
-  if (token) await pool.query('DELETE FROM sessions WHERE token_hash = ?', [hashToken(token)]);
-  res.clearCookie(config.cookie.name, cookieBase());
+  try {
+    if (token) await pool.query('DELETE FROM sessions WHERE token_hash = ?', [hashToken(token)]);
+  } catch (err) {
+    console.error(JSON.stringify({ level: 'error', msg: 'could not delete session', code: err.code || err.message }));
+  } finally {
+    res.clearCookie(config.cookie.name, cookieBase());
+  }
 }
 
 const purgeExpiredSessions = () => pool.query('DELETE FROM sessions WHERE expires_at <= UTC_TIMESTAMP()');
