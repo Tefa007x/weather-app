@@ -15,8 +15,8 @@ module.exports = {
   },
   cookie: {
     name: 'wa_session',
-    secure: env.COOKIE_SECURE === 'true', 
-    maxAgeMs: int(env.SESSION_TTL_HOURS, 168) * 3600 * 1000,
+    secure: String(env.COOKIE_SECURE || '').trim().toLowerCase() === 'true',
+    maxAgeMs: Math.max(int(env.SESSION_TTL_HOURS, 168), 1) * 3600 * 1000,
   },
   openMeteo: {
     geocodingUrl: env.OPEN_METEO_GEOCODING_URL || 'https://geocoding-api.open-meteo.com/v1/search',
@@ -24,7 +24,7 @@ module.exports = {
     timeoutMs: int(env.OPEN_METEO_TIMEOUT_MS, 8000),
   },
   cacheTtlMs: int(env.WEATHER_CACHE_TTL_SECONDS, 600) * 1000, 
-  bcryptRounds: int(env.BCRYPT_ROUNDS, 12),
+  bcryptRounds: Math.min(Math.max(Math.round(int(env.BCRYPT_ROUNDS, 12)), 10), 14),
   authRateLimit: int(env.AUTH_RATE_LIMIT, 30),
   registerRateLimit: int(env.REGISTER_RATE_LIMIT, 20), 
   upstreamRateLimit: int(env.UPSTREAM_RATE_LIMIT, 60), 
