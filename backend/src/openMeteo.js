@@ -116,6 +116,7 @@ async function geocode(query) {
 async function getPlaceById(id) {
   const cached = getCachedPlace(id);
   if (cached) return cached;
+  if (cache.get(`place-missing:${id}`)) return null; 
 
   const key = `place-lookup:${id}`;
   return coalesce(key, async () => {
@@ -129,11 +130,15 @@ async function getPlaceById(id) {
       data = await fetchJson(`${getUrl}?${params}`);
     } catch (err) {
       if (err instanceof AppError && (err.message.includes('HTTP 400') || err.message.includes('HTTP 404'))) {
+        cache.set(`place-missing:${id}`, true, 10 * 60 * 1000);
         return null;
       }
       throw err;
     }
-    if (!data || data.error || !Number.isSafeInteger(data.id) || !data.name) return null;
+    if (!data || data.error || !Number.isSafeInteger(data.id) || !data.name) {
+      cache.set(`place-missing:${id}`, true, 10 * 60 * 1000);
+       return null;
+    }
     const place = toPlace(data);
     rememberPlace(place);
     return place;
