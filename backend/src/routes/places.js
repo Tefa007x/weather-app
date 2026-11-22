@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { pool } = require('../db');
 const { AppError, wrap } = require('../errors');
-const { searchPlaces, getCachedPlace } = require('../openMeteo');
+const { searchPlaces, getCachedPlace, getPlaceById } = require('../openMeteo');
 
 const COLUMNS = 'place_id AS id, name, admin1, country, latitude, longitude';
 const toPlaceId = (v) => {
@@ -43,7 +43,7 @@ router.post('/favorites', wrap(async (req, res) => {
 
   let [rows] = await pool.query('SELECT 1 FROM favorites WHERE user_id = ? AND place_id = ? LIMIT 1', [uid, placeId]);
   if (!rows.length) {
-    const verified = getCachedPlace(placeId);
+    const verified = getCachedPlace(placeId) || await getPlaceById(placeId);
     if (verified) {
       await pool.query(
         'INSERT IGNORE INTO favorites (user_id, place_id, name, admin1, country, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?)',
