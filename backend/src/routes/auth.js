@@ -18,10 +18,19 @@ const limiter = rateLimit({
   handler: (req, res, next) => next(new AppError(429, 'too_many_requests', 'Too many attempts. Please wait a few minutes and try again.')),
 });
 
+// Sign-ups per IP, counting every attempt (the limiter above only counts failed ones).
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: config.registerRateLimit,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next) => next(new AppError(429, 'too_many_requests', 'Too many sign-ups from this network. Please try again later.')),
+});
+
 // Compared against when the account does not exist, so response time does not reveal valid usernames.
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', config.bcryptRounds);
 
-router.post('/register', limiter, wrap(async (req, res) => {
+router.post('/register', registerLimiter, limiter, wrap(async (req, res) => {
   const body = req.body || {};
   const username = normalizeUsername(body.username);
   const email = normalizeEmail(body.email);

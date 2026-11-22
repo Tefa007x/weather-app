@@ -25,7 +25,8 @@ module.exports = {
   },
   cacheTtlMs: int(env.WEATHER_CACHE_TTL_SECONDS, 600) * 1000, 
   bcryptRounds: int(env.BCRYPT_ROUNDS, 12),
-  authRateLimit: int(env.AUTH_RATE_LIMIT, 30), 
+  authRateLimit: int(env.AUTH_RATE_LIMIT, 30),
+  registerRateLimit: int(env.REGISTER_RATE_LIMIT, 20), 
   upstreamRateLimit: int(env.UPSTREAM_RATE_LIMIT, 60), 
   trustProxy: env.TRUST_PROXY === 'false' ? false : int(env.TRUST_PROXY, 1), 
 };
