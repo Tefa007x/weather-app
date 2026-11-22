@@ -5,6 +5,11 @@ const config = require('./config');
 const { pool } = require('./db');
 const { AppError, wrap } = require('./errors');
 const { requireReady, requireAuth, sameOriginGuard, noStore, requestLog } = require('./middleware');
+const limits = require('./limits');
+
+const UPSTREAM_PATHS = ['/places/search', '/weather', '/world'];
+const isUpstream = (req) => UPSTREAM_PATHS.some((p) => req.path === p || req.path.startsWith(`${p}/`)) || (req.method === 'POST' && req.path === '/favorites');
+const limitUpstream = (req, res, next) => (isUpstream(req) ? limits.upstream(req, res, next) : next());
 
 function createApp() {
   const app = express();
@@ -34,7 +39,7 @@ function createApp() {
 
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/me', requireAuth, require('./routes/me'));
-  app.use('/api', requireAuth, require('./routes/places'), require('./routes/weather'), require('./routes/world'));
+  app.use('/api', requireAuth, limitUpstream, require('./routes/places'), require('./routes/weather'), require('./routes/world'));
   app.use('/api', (req, res) => res.status(404).json({ error: 'not_found', message: 'Not found.' }));
 
   // eslint-disable-next-line no-unused-vars

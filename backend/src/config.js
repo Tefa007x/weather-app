@@ -1,4 +1,3 @@
-// All configuration comes from environment variables (see ../../.env.example).
 const env = process.env;
 const int = (value, fallback) => {
   const n = Number(value);
@@ -16,7 +15,7 @@ module.exports = {
   },
   cookie: {
     name: 'wa_session',
-    secure: env.COOKIE_SECURE === 'true', // set true once the site is served over HTTPS
+    secure: env.COOKIE_SECURE === 'true', 
     maxAgeMs: int(env.SESSION_TTL_HOURS, 168) * 3600 * 1000,
   },
   openMeteo: {
@@ -24,8 +23,9 @@ module.exports = {
     forecastUrl: env.OPEN_METEO_FORECAST_URL || 'https://api.open-meteo.com/v1/forecast',
     timeoutMs: int(env.OPEN_METEO_TIMEOUT_MS, 8000),
   },
-  cacheTtlMs: int(env.WEATHER_CACHE_TTL_SECONDS, 600) * 1000, // also drives "Updates every 10 min"
+  cacheTtlMs: int(env.WEATHER_CACHE_TTL_SECONDS, 600) * 1000, 
   bcryptRounds: int(env.BCRYPT_ROUNDS, 12),
-  authRateLimit: int(env.AUTH_RATE_LIMIT, 30), // failed login/register attempts per IP per 15 min
-  trustProxy: env.TRUST_PROXY === 'false' ? false : int(env.TRUST_PROXY, 1), // 1 = behind nginx
+  authRateLimit: int(env.AUTH_RATE_LIMIT, 30), 
+  upstreamRateLimit: int(env.UPSTREAM_RATE_LIMIT, 60), 
+  trustProxy: env.TRUST_PROXY === 'false' ? false : int(env.TRUST_PROXY, 1), 
 };
