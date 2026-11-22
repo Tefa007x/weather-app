@@ -18,8 +18,8 @@ async function recordSearch(userId, place) {
       [userId, userId],
     );
   } catch (err) {
-    if (err && err.code === 'ER_LOCK_DEADLOCK') return; // non-fatal on concurrent tab requests
-    throw err;
+    // History is a convenience: never fail a request that already has its forecast.
+    if (!err || err.code !== 'ER_LOCK_DEADLOCK') console.error(JSON.stringify({ level: 'error', msg: 'could not record search history', code: err && err.code }));
   }
 }
 
