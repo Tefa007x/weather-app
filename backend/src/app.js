@@ -47,6 +47,7 @@ function createApp() {
     if (err instanceof AppError) return res.status(err.status).json({ error: err.code, message: err.message });
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'invalid_json', message: 'Request body must be valid JSON.' });
     if (err.type === 'entity.too.large') return res.status(413).json({ error: 'payload_too_large', message: 'Request body is too large.' });
+    if (err.status >= 400 && err.status < 500 && err.expose) return res.status(err.status).json({ error: 'bad_request', message: 'The request could not be processed.' });
     console.error(JSON.stringify({ level: 'error', msg: err.message, stack: err.stack }));
     return res.status(500).json({ error: 'internal_error', message: 'Something went wrong on our side. Please try again.' });
   });
