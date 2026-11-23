@@ -44,7 +44,7 @@ router.post('/register', registerLimiter, limiter, wrap(async (req, res) => {
   } catch (err) {
     throw fromDbError(err);
   }
-  await createSession(res, insertId);
+  await createSession(res, insertId, req);
   res.status(201).json({ user: toUser({ id: insertId, username, email, temperature_unit: 'C' }) });
 }));
 
@@ -65,7 +65,7 @@ router.post('/login', limiter, wrap(async (req, res) => {
   const ok = await bcrypt.compare(password.slice(0, 200), user ? user.password_hash : DUMMY_HASH);
   if (!user || !ok) throw new AppError(401, 'invalid_credentials', 'Invalid username/email or password.');
 
-  await createSession(res, user.id);
+  await createSession(res, user.id, req);
   res.json({ user: toUser(user) });
 }));
 
