@@ -1207,21 +1207,23 @@ function bindEvents() {
 }
 
 async function init() {
-  const bootOverlay = $('boot-overlay');
-  if (bootOverlay) bootOverlay.classList.add('open');
+  const bootSplash = $('boot-splash');
 
   bindEvents();
   updateSystemClock();
   setInterval(updateSystemClock, 15000);
+
+  const minSplash = new Promise((r) => setTimeout(r, 300));
   try {
-    const { user } = await api('GET', '/auth/me');
-    if (bootOverlay) bootOverlay.classList.remove('open');
+    const [{ user }] = await Promise.all([api('GET', '/auth/me'), minSplash]);
     await enterApp(user, { silent: true });
   } catch (err) {
-    if (bootOverlay) bootOverlay.classList.remove('open');
+    await minSplash;
     showScreen('auth');
     setAuthTab('login');
     if (err.status === 0) showAuthError(err.message);
+  } finally {
+    if (bootSplash) bootSplash.classList.add('hidden');
   }
 }
 
