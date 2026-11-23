@@ -7,7 +7,7 @@ const LABELS = {
   71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 77: 'Snow Grains',
   80: 'Light Showers', 81: 'Rain Showers', 82: 'Violent Showers',
   85: 'Snow Showers', 86: 'Heavy Snow Showers',
-  95: 'Thunderstorm', 96: 'Thunderstorm with Hail', 99: 'Severe Thunderstorm with Hail',
+  95: 'Thunderstorm', 96: 'Thunderstorm with Hail', 97: 'Heavy Thunderstorm', 99: 'Severe Thunderstorm with Hail',
 };
 
 function iconFor(code, isDay) {
