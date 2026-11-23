@@ -1,5 +1,4 @@
 # WeatherApp local stack: MySQL + backend (Node.js) + frontend (nginx)
-#   cp .env.example .env && docker compose up --build   ->   http://localhost:8080
 services:
   mysql:
     image: mysql:8.4
@@ -11,11 +10,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set it in .env}
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
     volumes:
-      - mysql-data:/var/lib/mysql          # survives "docker compose down" (not "down -v")
+      - mysql-data:/var/lib/mysql
     ports:
-      - "127.0.0.1:3306:3306"              # local inspection only (mysql client / DBeaver)
+      - "127.0.0.1:3306:3306"
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -h 127.0.0.1 -uroot --silent"]
       interval: 5s
       timeout: 5s
       retries: 20

@@ -6,7 +6,9 @@ const hashToken = (token) => crypto.createHash('sha256').update(token).digest('h
 
 const cookieBase = () => ({ httpOnly: true, sameSite: 'lax', secure: config.cookie.secure, path: '/' });
 
-async function createSession(res, userId) {
+async function createSession(res, userId, req) {
+  const old = req && req.cookies && req.cookies[config.cookie.name];
+  if (old) await pool.query('DELETE FROM sessions WHERE token_hash = ?', [hashToken(old)]);
   const token = crypto.randomBytes(32).toString('base64url');
   await pool.query(
     'INSERT INTO sessions (user_id, token_hash, expires_at) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? SECOND))',
