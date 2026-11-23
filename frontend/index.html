@@ -11,39 +11,15 @@
 <body>
 
 <!-- Boot overlay (shown while restoring session) -->
-<div id="boot-overlay" class="boot-overlay" role="status" aria-live="polite" aria-label="Restoring session">
-  <div class="boot-shell">
-    <div class="boot-head">
-      <div class="boot-brand">
-        <div class="cloud-logo" style="transform:scale(0.8);transform-origin:left center" aria-hidden="true">
-          <div class="body"></div><div class="bump1"></div><div class="bump2"></div><div class="shine"></div>
-        </div>
-        <div>
-          <div style="font-weight:800;font-size:1.1rem;color:#fff">WeatherApp</div>
-          <div style="font-size:12px;color:var(--text-secondary)">Checking your session…</div>
-        </div>
-      </div>
-      <div class="boot-status">
-        <span class="boot-dot" aria-hidden="true"></span>
-        <span>Loading…</span>
-      </div>
+<div id="boot-splash" class="boot-splash" role="status" aria-live="polite" aria-label="Loading WeatherApp">
+  <div class="boot-brand">
+    <div class="cloud-logo" aria-hidden="true">
+      <div class="body"></div><div class="bump1"></div><div class="bump2"></div><div class="shine"></div>
     </div>
-    <div class="boot-grid">
-      <div>
-        <div class="skel boot-hero"></div>
-        <div class="boot-strip">
-          <div class="skel boot-tile"></div><div class="skel boot-tile"></div>
-          <div class="skel boot-tile"></div><div class="skel boot-tile"></div>
-          <div class="skel boot-tile"></div>
-        </div>
-      </div>
-      <div class="boot-side">
-        <div class="skel boot-row"></div><div class="skel boot-row"></div>
-        <div class="skel boot-row"></div><div class="skel boot-row"></div>
-        <div class="skel boot-row"></div>
-      </div>
-    </div>
+    <div class="logo-text">Weather<span>App</span></div>
   </div>
+  <div class="boot-skeleton-bar" aria-hidden="true"></div>
+  <div class="boot-caption">Restoring session…</div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
