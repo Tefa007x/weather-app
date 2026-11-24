@@ -116,7 +116,7 @@ async function geocode(query) {
 async function getPlaceById(id) {
   const cached = getCachedPlace(id);
   if (cached) return cached;
-  if (cache.get(`place-missing:${id}`)) return null; 
+  if (cache.get(`place-missing:${id}`)) return null;
 
   const key = `place-lookup:${id}`;
   return coalesce(key, async () => {
@@ -137,7 +137,7 @@ async function getPlaceById(id) {
     }
     if (!data || data.error || !Number.isSafeInteger(data.id) || !data.name) {
       cache.set(`place-missing:${id}`, true, 10 * 60 * 1000);
-       return null;
+      return null;
     }
     const place = toPlace(data);
     rememberPlace(place);
