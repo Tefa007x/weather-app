@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
 const { pool } = require('../db');
