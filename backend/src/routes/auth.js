@@ -27,10 +27,19 @@ const registerLimiter = rateLimit({
   handler: (req, res, next) => next(new AppError(429, 'too_many_requests', 'Too many sign-ups from this network. Please try again later.')),
 });
 
+// All login attempts per IP per minute (prevents flooding bcrypt with valid logins).
+const loginBurstLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: config.loginRateLimit,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next) => next(new AppError(429, 'too_many_requests', 'Too many sign-in attempts. Please wait a minute and try again.')),
+});
+
 // Compared against when the account does not exist, so response time does not reveal valid usernames.
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', config.bcryptRounds);
 
-router.post('/register', registerLimiter, limiter, wrap(async (req, res) => {
+router.post('/register', registerLimiter, wrap(async (req, res) => {
   const body = req.body || {};
   const username = normalizeUsername(body.username);
   const email = normalizeEmail(body.email);
@@ -48,7 +57,7 @@ router.post('/register', registerLimiter, limiter, wrap(async (req, res) => {
   res.status(201).json({ user: toUser({ id: insertId, username, email, temperature_unit: 'C' }) });
 }));
 
-router.post('/login', limiter, wrap(async (req, res) => {
+router.post('/login', loginBurstLimiter, limiter, wrap(async (req, res) => {
   const { identifier, password } = req.body || {};
   if (typeof identifier !== 'string' || typeof password !== 'string' || !identifier.trim() || !password) {
     throw new AppError(400, 'validation_error', 'Please fill in all required credentials.');

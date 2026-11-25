@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set it in .env}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-weather}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-weather_app}
       MYSQL_USER: ${MYSQL_USER:-weather_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set it in .env}
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
@@ -28,7 +28,7 @@ services:
       PORT: "3000"
       DB_HOST: mysql
       DB_PORT: "3306"
-      DB_NAME: ${MYSQL_DATABASE:-weather}
+      DB_NAME: ${MYSQL_DATABASE:-weather_app}
       DB_USER: ${MYSQL_USER:-weather_user}
       DB_PASSWORD: ${MYSQL_PASSWORD:?set it in .env}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
@@ -36,6 +36,10 @@ services:
       WEATHER_CACHE_TTL_SECONDS: ${WEATHER_CACHE_TTL_SECONDS:-600}
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
       AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-30}
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-20}
+      REGISTER_RATE_LIMIT: ${REGISTER_RATE_LIMIT:-20}
+      UPSTREAM_RATE_LIMIT: ${UPSTREAM_RATE_LIMIT:-60}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
     depends_on:
       mysql:
         condition: service_healthy
