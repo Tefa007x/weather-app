@@ -1,18 +1,17 @@
-FROM node:20-alpine
-
-ENV NODE_ENV=production
-
+FROM node:20-alpine AS deps
 WORKDIR /app
-
-# Dependency layer first so it stays cached until package files change
+RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json ./
-
 RUN npm ci --omit=dev && npm cache clean --force
 
+FROM node:20-alpine
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
 COPY src ./src
 
 USER node
-
 EXPOSE 3000
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \

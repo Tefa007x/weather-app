@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # End-to-end API check for a running stack (needs only bash + curl).
 set -u
 BASE="${BASE_URL:-http://localhost:8080}"
