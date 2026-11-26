@@ -151,21 +151,39 @@ function normalizeForecast(data) {
   const c = data.current;
   const d = data.daily;
 
-  // Daily humidity = mean of the 24 hourly values (grouped by the city's local date).
+  // Group hourly slots and daily mean humidity by the city's local date (all 7 days).
   const humidityByDate = new Map();
+  const hourlyByDate = new Map();
   const h = data.hourly || {};
   const hourlyTimes = Array.isArray(h.time) ? h.time : [];
   hourlyTimes.forEach((t, i) => {
-    const v = (h.relative_humidity_2m || [])[i];
-    if (typeof v !== 'number') return;
     const date = t.slice(0, 10);
-    const acc = humidityByDate.get(date) || { sum: 0, n: 0 };
-    acc.sum += v;
-    acc.n += 1;
-    humidityByDate.set(date, acc);
+    const v = (h.relative_humidity_2m || [])[i];
+    if (typeof v === 'number') {
+      const acc = humidityByDate.get(date) || { sum: 0, n: 0 };
+      acc.sum += v;
+      acc.n += 1;
+      humidityByDate.set(date, acc);
+    }
+    const temp = round1((h.temperature_2m || [])[i]);
+    if (temp !== null) {
+      const code = (h.weather_code || [])[i] ?? c.weather_code;
+      const isDay = (h.is_day || [])[i] !== undefined ? (h.is_day || [])[i] === 1 : c.is_day === 1;
+      const list = hourlyByDate.get(date) || [];
+      list.push({
+        time: t,
+        temperature: temp,
+        humidity: roundInt(v),
+        rainChance: roundInt((h.precipitation_probability || [])[i]) ?? 0,
+        weatherCode: code,
+        isDay,
+        condition: describe(code, isDay),
+      });
+      hourlyByDate.set(date, list);
+    }
   });
 
-  // Next 24 hours starting from current local hour
+  // Next 24 hours starting from current local hour (used for Today)
   const curHourPrefix = typeof c.time === 'string' && c.time.length >= 13 ? c.time.slice(0, 13) : '';
   let startIdx = curHourPrefix ? hourlyTimes.findIndex((t) => t.slice(0, 13) >= curHourPrefix) : 0;
   if (startIdx < 0) startIdx = 0;
@@ -190,19 +208,21 @@ function normalizeForecast(data) {
   const daily = d.time
     .map((date, i) => {
       const acc = humidityByDate.get(date);
+      const code = d.weather_code?.[i];
       return {
         date,
-        high: round1(d.temperature_2m_max[i]),
-        low: round1(d.temperature_2m_min[i]),
-        feelsLike: round1(d.apparent_temperature_max[i]),
+        high: round1(d.temperature_2m_max?.[i]),
+        low: round1(d.temperature_2m_min?.[i]),
+        feelsLike: round1(d.apparent_temperature_max?.[i]),
         humidity: acc ? Math.round(acc.sum / acc.n) : null,
-        windSpeed: roundInt(d.wind_speed_10m_max[i]),
-        weatherCode: d.weather_code[i],
-        condition: describe(d.weather_code[i], true),
+        windSpeed: roundInt(d.wind_speed_10m_max?.[i]),
+        weatherCode: code,
+        condition: describe(code, true),
         rainChance: roundInt(d.precipitation_probability_max?.[i]) ?? null,
         uvIndex: round1(d.uv_index_max?.[i]) ?? null,
         sunrise: d.sunrise?.[i] ? d.sunrise[i].slice(11, 16) : null,
         sunset: d.sunset?.[i] ? d.sunset[i].slice(11, 16) : null,
+        hourly: hourlyByDate.get(date) || [],
       };
     })
     .filter((day) => day.high !== null && day.low !== null);
